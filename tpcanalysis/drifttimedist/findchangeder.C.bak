@@ -1,0 +1,63 @@
+{
+  TFile::Open("timedist.root");
+  int nbins=timedist_0_6->GetNbinsX();
+  double threshold=.0007;//threshold for derivative 
+  double endthreshold=.0003;//endthreshold
+  double content=0,content_1=0;
+  double starttime=0,endtime=0;
+  double derivative[nbins]={};
+  bool foundstart=false,foundend=false;
+  bool below=false,above=false;
+  TH1D *integral = new TH1D("integral","integral",nbins,0,20);
+
+  for(int i=0;i<nbins;i++)
+    {
+      content+=timedist_0_6->GetBinContent(i);
+      content_1=content+timedist_0_6->GetBinContent(i+1);
+      double temp=TMath::Abs(content_1-content);
+      integral->SetBinContent(i,content);
+      derivative[i]=temp;  
+    }
+  
+  for(int i=0;i<nbins;i++)
+    {
+      if(i>=3 && derivative[i-1]<threshold && derivative[i-2]<threshold)//&& derivative[i-3]<threshold)
+	{
+	  foundstart=true;
+	}
+      else foundstart=false;
+    
+      if(i>=3 && derivative[i-1]>endthreshold && derivative[i-2]>endthreshold)// && derivative[i-3]>endthreshold)
+	{
+	  foundend=true;
+	}
+      else foundend=false;
+    
+      if(i<=(nbins-2) && derivative[i]>threshold && derivative[i+1]>threshold && derivative[i+2]>threshold)
+    {
+      foundstart*=true;
+    }
+    else foundstart*=false;
+  
+  if(i<=(nbins-2) && derivative[i]<endthreshold && derivative[i+1]<endthreshold && derivative[i+2]<endthreshold)
+    {
+      foundend*=true;
+    }
+  else foundend*=false;
+  
+  
+  if(foundstart==true)
+    {
+      starttime=timedist_0_6->GetBinCenter(i);
+    }
+  else if(starttime>0 && foundend==true)
+    {
+      endtime=timedist_0_6->GetBinCenter(i);	
+      
+    }
+
+  //cout<<i<<" "<<foundstart<<" "<<foundend<<endl;
+cout<<starttime<<" "<<endtime<<endl;
+
+}
+}

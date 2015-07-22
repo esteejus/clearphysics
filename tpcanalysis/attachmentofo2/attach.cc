@@ -39,17 +39,21 @@ consider a MC Chi2 analysis where you assume some cosmic ray dist
   */
   Double_t driftvel=54.3/2;//mm/us divide by two because I halved the sampling rate to display full events in the viewer was 50  MHz now its 25Mhz that time buckets went from 20ns to 40ns.
   TH1D *time = new TH1D("time","time position",2000,0,20);
-  TFile *_file0 = TFile::Open("~/fair_install/SpiRITROOT/macros/output.root");
-  TTree *cbmsim = (TTree *) _file0 -> Get("cbmsim");
-  cbmsim -> Print();
+  TChain *chain = new TChain("cbmsim");
+  //TFile *_file0 = TFile::Open("/cache/scr/spirit/spiritroot_repo/macros/cosmic_threshold50.root");
+    chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_2015_badresistor.root");
+      chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_2015_badresistor_1.root");
+
+  //TTree *cbmsim = (TTree *) _file0 -> Get("cbmsim");
+  //cbmsim -> Print();
   TClonesArray *eventArray; //array of objects
 
-  cbmsim -> SetBranchAddress("STEventH", &eventArray);//Store array of events into TClonesArray
-  Int_t nentries=cbmsim->GetEntries();
-  //nentries=200;
-    bool flag=false;//if any no event between time buckets then true
-
-
+  chain -> SetBranchAddress("STEventH", &eventArray);//Store array of events into TClonesArray
+  Int_t nentries=chain->GetEntries();
+   nentries=16200;
+  bool flag=false;//if any no event between time buckets then true
+  
+  
   int ndiv=50;
   double starttime=5.7+.4;//us .4us should be bellow the gating grid. 
   double endtime=15.1;//us
@@ -60,32 +64,40 @@ consider a MC Chi2 analysis where you assume some cosmic ray dist
   for(int i=0;i<ndiv;i++)
     {
       TString name =Form("name_%i",i);
-      charge[i]=new TH1D(name,"charge dist",5000,0,1000);
+      charge[i]=new TH1D(name,"charge dist",5000,0,5000);
     }
-  
   for(int i=0;i<nentries;i++)
     {
-
-      cbmsim -> GetEntry(i);//This changes the event index
+      if(i%1000==0)cout<<i<<endl;
+      chain -> GetEntry(i);//This changes the event index
       STEvent *event;
       event = (STEvent *) eventArray -> At(0);//there is only one event in each index
       Int_t nhits=event -> GetNumHits();//total number of hits
 
+      if(event->IsGood()==false)
+	{
+	  cout<<"Event "<<i<<" is bad!!!"<<endl;
+	  continue;
+	}
+
       for(int j=0;j<nhits;j++)
 	{
 	  STHit *hit = event -> GetHit(j);//increase hit
-	  Double_t xpos=hit->GetPosition()->X();
-	  Double_t zpos=hit->GetPosition()->Z();
-	  Double_t ypos=hit -> GetPosition()->Y();
+	  Double_t xpos=hit->GetPosition().X();
+	  Double_t zpos=hit->GetPosition().Z();
+	  Double_t ypos=hit -> GetPosition().Y();
+	  //cout<<ypos<<endl;
 	  Double_t drifttime=-ypos/driftvel;
 	  Double_t hitcharge=hit->GetCharge();
 	  time->Fill(drifttime);
 	  ydist->Fill(ypos);
+
+	  bool badregion =((zpos<=900 && zpos>840 && xpos<=288 && xpos>216));
 	  for(int k=0;k<ndiv;k++)
 	    {
 	      double lowerlim=starttime+(k*(endtime-starttime)/ndiv);
 	      double upperlim=starttime+((k+1)*(endtime-starttime)/ndiv);
-	      if(drifttime<upperlim && drifttime>lowerlim)charge[k]->Fill(hitcharge);      
+	      if(drifttime<upperlim && drifttime>lowerlim && badregion==false)charge[k]->Fill(hitcharge);      
 	      
 	    }
 	  
@@ -95,7 +107,12 @@ consider a MC Chi2 analysis where you assume some cosmic ray dist
 	}
 
     }
+  TFile *f = new TFile("chargedist.root","RECREATE");
+  f->cd();
+  for(int i=0;i<ndiv;i++)charge[i]->Write();
+  f->Write();
+  f->Close();
   //ydist->Draw();
-  time->Draw();
+  // time->Draw();
        
 }

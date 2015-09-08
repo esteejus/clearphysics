@@ -41,16 +41,22 @@ consider a MC Chi2 analysis where you assume some cosmic ray dist
   TH1D *time = new TH1D("time","time position",2000,0,20);
   TChain *chain = new TChain("cbmsim");
   //TFile *_file0 = TFile::Open("/cache/scr/spirit/spiritroot_repo/macros/cosmic_threshold50.root");
-    chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_2015_badresistor.root");
-      chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_2015_badresistor_1.root");
 
-  //TTree *cbmsim = (TTree *) _file0 -> Get("cbmsim");
-  //cbmsim -> Print();
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_run0335.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_run0336.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_run0339.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_run0334.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_run0342.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_run0346.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_run0346_1.root");
+  
+	    //TTree *cbmsim = (TTree *) _file0 -> Get("cbmsim");
+	    //cbmsim -> Print();
   TClonesArray *eventArray; //array of objects
 
-  chain -> SetBranchAddress("STEventH", &eventArray);//Store array of events into TClonesArray
+  chain -> SetBranchAddress("STEventHC", &eventArray);//Store array of events into TClonesArray
   Int_t nentries=chain->GetEntries();
-   nentries=16200;
+  cout<<"Total entries "<<nentries<<endl;//   nentries=16200;
   bool flag=false;//if any no event between time buckets then true
   
   
@@ -66,14 +72,16 @@ consider a MC Chi2 analysis where you assume some cosmic ray dist
       TString name =Form("name_%i",i);
       charge[i]=new TH1D(name,"charge dist",5000,0,5000);
     }
+
+  //   nentries=2000;
   for(int i=0;i<nentries;i++)
     {
       if(i%1000==0)cout<<i<<endl;
       chain -> GetEntry(i);//This changes the event index
       STEvent *event;
       event = (STEvent *) eventArray -> At(0);//there is only one event in each index
-      Int_t nhits=event -> GetNumHits();//total number of hits
-
+      Int_t nhits=event -> GetNumClusters();//Hits();//total number of hits
+      //cout<<nhits<<endl;
       if(event->IsGood()==false)
 	{
 	  cout<<"Event "<<i<<" is bad!!!"<<endl;
@@ -82,22 +90,26 @@ consider a MC Chi2 analysis where you assume some cosmic ray dist
 
       for(int j=0;j<nhits;j++)
 	{
-	  STHit *hit = event -> GetHit(j);//increase hit
+	  STHitCluster *hit = event->GetCluster(j);
 	  Double_t xpos=hit->GetPosition().X();
 	  Double_t zpos=hit->GetPosition().Z();
 	  Double_t ypos=hit -> GetPosition().Y();
-	  //cout<<ypos<<endl;
 	  Double_t drifttime=-ypos/driftvel;
 	  Double_t hitcharge=hit->GetCharge();
 	  time->Fill(drifttime);
 	  ydist->Fill(ypos);
 
-	  bool badregion =((zpos<=900 && zpos>840 && xpos<=288 && xpos>216));
+	  //bool badregion =((zpos<=900 && zpos>840 && xpos<=-288 && xpos>-216));//bad cobo region
+	  bool badpad=(zpos<=354.5 && xpos<=92.5 && xpos>=91.5 && zpos>=353.5);
+	 	  //int num=event->GetNumHits();
+	  //	  if(nhits<10)cout<<"event "<<i<<" "<<xpos<<" "<<zpos<<" "<<hitcharge<<endl;
+	  //	        if(badpad==true)cout<<"event "<<i<<" "<<xpos<<" "<<zpos<<" "<<hitcharge<<endl;
+
 	  for(int k=0;k<ndiv;k++)
 	    {
 	      double lowerlim=starttime+(k*(endtime-starttime)/ndiv);
 	      double upperlim=starttime+((k+1)*(endtime-starttime)/ndiv);
-	      if(drifttime<upperlim && drifttime>lowerlim && badregion==false)charge[k]->Fill(hitcharge);      
+	      if(drifttime<upperlim && drifttime>lowerlim && badpad==false)charge[k]->Fill(hitcharge);      
 	      
 	    }
 	  

@@ -59,15 +59,22 @@ int main(){
 
 TChain *chain = new TChain("cbmsim");
   //TFile *_file0 = TFile::Open("/cache/scr/spirit/spiritroot_repo/macros/cosmic_threshold50.root");
-  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_2015_badresistor.root");
-  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_2015_badresistor_1.root");
+   chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_342.root");
+   //  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_340.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_334.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_336.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_335.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_338.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_16_6k.root");
+  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_16_6k_1.root");
+  
 
-  TClonesArray *eventArray; //array of objects
+  TClonesArray *eventArray=NULL; //array of objects
 
   chain -> SetBranchAddress("STEventH", &eventArray);//Store array of events into TClonesArray
   Int_t nentries=chain->GetEntries();
     bool flag=false;//if any no event between time buckets then true
-    nentries=16200;
+    cout<<"Num events "<<nentries<<endl;//nentries=16200;
 
 
  

@@ -1,4 +1,3 @@
-
 /*#ifndef __CINT__
 #include <TH1D.h>
 #include <TFile.h>
@@ -34,14 +33,14 @@ int main(){
 =====================================
   */
 
-  void drifttimedist(){
+  void drifttimesummary(TString data){
     gStyle->SetOptStat(0);
 
     Double_t driftvel=54.3/2;//mm/us divide by two because I halved the sampling rate to display full events in the viewer was 50  MHz now its 25Mhz that time buckets went from 20ns to 40ns.
 
-    const int padxdiv=10,padzdiv=15;
-    double zbins[16]={0,25,50,100,200,300,400,500,600,700,800,900,1000,1200,1300,1400};  
-
+    const int padxdiv=108,padzdiv=112;
+    // double zbins[16]={0,25,50,100,200,300,400,500,600,700,800,900,1000,1200,1300,
+    
   TH1D *time[padzdiv][padxdiv]; 
   for(int i=0;i<padzdiv;i++)
     for(int j=0;j<padxdiv;j++)
@@ -52,22 +51,16 @@ int main(){
 	  time[i][j]= new TH1D(name,name,1000,0,20);
 	}
       }
-  TH2D *padplane = new TH2D("padplane","padplane",15,zbins,padxdiv,-440,440);
+   
+  TH2D *padplane = new TH2D("padplane","padplane",padzdiv,0,1344,padxdiv,-432,432);
   // TFile *_file0 = TFile::Open("/cache/scr/spirit/spiritroot_repo/macros/cosmic_2015_badresistor.root");
   //TTree *cbmsim = (TTree *) _file0 -> Get("cbmsim");
   //cbmsim -> Print();
 
-TChain *chain = new TChain("cbmsim");
-  //TFile *_file0 = TFile::Open("/cache/scr/spirit/spiritroot_repo/macros/cosmic_threshold50.root");
-   chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_342.root");
-   //  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_340.root");
-  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_334.root");
-  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_336.root");
-  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_335.root");
-  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_338.root");
-  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_16_6k.root");
-  chain->Add("/cache/scr/spirit/spiritroot_repo/macros/cosmic_badresistor_16_6k_1.root");
-  
+  TChain *chain = new TChain("cbmsim");
+  // TFile *_file0 = TFile::Open("/mnt/research/spirit/SPIRIT_TPC/fair_install/SpiRITROOT/macros/fullcosmic.root");
+  chain->Add("/mnt/research/spirit/SPIRIT_TPC/fair_install/SpiRITROOT/macros/"+data+".root");
+
 
   TClonesArray *eventArray=NULL; //array of objects
 
@@ -106,7 +99,7 @@ TChain *chain = new TChain("cbmsim");
 	  Int_t binz=padplane->GetXaxis()->FindBin(zpos);
 	  Int_t binx=padplane->GetYaxis()->FindBin(xpos);
 	  
-	  time[binz-1][binx-1]->Fill(drifttime);
+	  //	  time[binz-1][binx-1]->Fill(drifttime);
 	}
 
     }
@@ -118,15 +111,15 @@ TChain *chain = new TChain("cbmsim");
     for(int j=0;j<padxdiv;j++)
       { 
 	{
-	  double drifttime=calc_derivative(time[i][j]);
+	  //	  double drifttime=calc_derivative(time[i][j]);
 	  padplane->SetBinContent(i+1,j+1,drifttime);
 	}
       }
   
 
-  padplane->Draw("colz");
+ //  padplane->Draw("colz");
   
- TFile *f = new TFile("./rootfiles/timedist.root","RECREATE");
+ TFile *f = new TFile("./rootfiles/"+data,"RECREATE");
  f->cd(); 
 for(int i=0;i<padzdiv;i++)
     for(int j=0;j<padxdiv;j++)
